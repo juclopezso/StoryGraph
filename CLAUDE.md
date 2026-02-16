@@ -10,44 +10,60 @@ All documentation is written in **Spanish**.
 
 ## Planned Technology Stack
 
-- **Frontend:** React.js or Vue.js SPA, served via S3 + CloudFront
+- **Frontend:** Two SPAs (UI Usuario + UI Administración) built with React.js or Vue.js, served via S3 + CloudFront
 - **Backend:** Node.js + Express or Python + FastAPI
-- **Databases:** PostgreSQL (users, metadata), MongoDB (story nodes/graph structure), Redis (cache/sessions)
-- **Search:** Elasticsearch / OpenSearch
-- **Events:** Amazon EventBridge / Kafka / SNS+SQS (CloudEvents format)
+- **Databases:** PostgreSQL (auth, users, story metadata, reading progress, notifications), MongoDB (stories and narrative nodes), Redis (reading cache)
+- **Search:** OpenSearch / Elasticsearch
+- **Message Broker:** Apache Kafka / RabbitMQ / Amazon SNS+SQS (CloudEvents format)
 - **Auth:** JWT tokens
 - **Graph Visualization:** D3.js or Cytoscape.js
 - **Deployment:** AWS (ECS Fargate or EKS), API Gateway, CloudFront
 
 ## Architecture
 
-The system follows a **microservices + event-driven** architecture with 7 services:
+The system follows a **microservices + event-driven** architecture with 10 components:
+
+### Frontends
+
+| Component | Responsibility |
+|-----------|---------------|
+| **UI Usuario** | SPA for end users: login, story browsing, reading, creation |
+| **UI Administración** | SPA for admins: user management, roles, platform config |
+
+### Infrastructure
+
+| Component | Responsibility |
+|-----------|---------------|
+| **API Gateway** | Single entry point: routing, JWT auth, rate limiting, orchestration |
+| **Message Broker** | Async messaging from Story/Reading services to Notification/Search |
+
+### Microservices
 
 | Service | Responsibility | Database |
 |---------|---------------|----------|
-| **Auth Service** | Registration, login, JWT, roles (Creator/Reader) | PostgreSQL |
-| **Story Service** | Story CRUD, metadata, publication | PostgreSQL + MongoDB |
-| **Graph Service** | Narrative graph engine: nodes, edges, validation | MongoDB |
-| **Reader Service** | Reading experience, progress, choice history | MongoDB + Redis |
-| **Analytics Service** | Consumption statistics, popular paths, abandonment | PostgreSQL/ClickHouse |
-| **Notification Service** | Email/push on story publish, welcome emails | — (SES/SendGrid) |
+| **Auth Service** | Registration, login, JWT, roles, permissions | PostgreSQL |
+| **User Service** | User profiles, demographics, profile photo | PostgreSQL + S3 |
+| **Story Service** | Story CRUD, classifications, narrative nodes, graph validation | PostgreSQL + MongoDB |
+| **Reading Service** | Reading interaction, progress, history, completed stories | PostgreSQL + Redis |
+| **Notification Service** | Notifications to readers/writers on publish, completion, etc. | PostgreSQL |
 | **Search Service** | Full-text story indexing and search | OpenSearch |
 
 ### Key Patterns
 
-- **CQRS:** Write models (MongoDB) separated from read-optimized stores (OpenSearch, analytics aggregations)
+- **CQRS:** Write models (PostgreSQL/MongoDB) separated from read-optimized stores (OpenSearch)
 - **Event Sourcing:** Reader choice history reconstructed from `reader.choice_made` event sequence
 - **Database per Service:** No shared databases between microservices
-- **API Gateway:** Single entry point handling auth, routing, and rate limiting
+- **API Gateway:** Single entry point handling auth, routing, rate limiting, and orchestration
 
 ### Event Flow
 
-Primary services (Auth, Story, Reader) **emit** events. Secondary services (Analytics, Notification, Search) **consume** events asynchronously via the event bus. Key events: `story.published`, `reader.choice_made`, `reader.story_completed`, `user.registered`.
+Story Service and Reading Service **emit** events to the Message Broker. Notification Service and Search Service **consume** events asynchronously. Key events: `story.published`, `story.updated`, `story.deleted`, `reader.choice_made`, `reader.story_completed`, `user.registered`.
 
 ### Main API Routes
 
 - `/auth/*` — Auth Service
-- `/stories/*` — Story Service
-- `/stories/:id/nodes/*`, `/stories/:id/graph`, `/stories/:id/validate` — Graph Service
-- `/read/:storyId/*` — Reader Service
-- `/search` — Search Service
+- `/users/*` — User Service
+- `/stories/*` — Story Service (including nodes, graph, validation)
+- `/read/*` — Reading Service
+- `/search/*` — Search Service
+- `/admin/*` — User Service / Auth Service
