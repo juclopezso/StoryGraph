@@ -1,0 +1,30 @@
+sequenceDiagram
+    title Flujo 1: Registro de Usuario
+
+    actor Usuario
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Auth as Auth Service
+    participant Broker as Message Broker
+    participant User as User Service
+    participant Notif as Notification Service
+
+    Usuario->>UI: Completa formulario de registro
+    UI->>GW: POST /auth/register
+    GW->>Auth: Redirige petición
+    Auth->>Auth: Crea credenciales y asigna rol "Lector"
+    Auth->>Auth: Genera JWT + refresh token
+
+    Auth-)Broker: Emite user.registered
+
+    par Procesamiento asíncrono
+        Broker-)User: Consume user.registered
+        User->>User: Crea perfil de usuario
+    and
+        Broker-)Notif: Consume user.registered
+        Notif->>Notif: Crea notificación de bienvenida
+    end
+
+    Auth-->>GW: 201 {accessToken, refreshToken}
+    GW-->>UI: Respuesta con tokens
+    UI-->>Usuario: Redirige al dashboard

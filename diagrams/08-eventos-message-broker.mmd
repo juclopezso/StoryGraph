@@ -1,0 +1,27 @@
+---
+title: StoryGraph MVP — Flujo de Eventos del Message Broker
+---
+flowchart LR
+    subgraph Productores
+        AuthSvc[Auth Service]
+        StorySvc[Story Service]
+        ReadingSvc[Reading Service]
+    end
+
+    subgraph Broker["Message Broker"]
+        E1([user.registered])
+        E2([story.published])
+        E5([reader.story_completed])
+    end
+
+    subgraph Consumidores
+        NotifSvc[Notification Service]
+    end
+
+    AuthSvc -->|emite| E1
+    StorySvc -->|emite| E2
+    ReadingSvc -->|emite| E5
+
+    E1 -->|consume| NotifSvc
+    E2 -->|consume| NotifSvc
+    E5 -->|consume| NotifSvc

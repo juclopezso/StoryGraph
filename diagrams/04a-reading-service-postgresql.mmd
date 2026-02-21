@@ -1,0 +1,26 @@
+---
+title: Reading Service — PostgreSQL (Sesiones e Historial)
+---
+erDiagram
+    reading_sessions {
+        UUID id PK
+        UUID user_id "NOT NULL, FK logica Auth"
+        UUID story_id "NOT NULL, FK logica Story"
+        VARCHAR current_node_id "NOT NULL"
+        VARCHAR status "DEFAULT in_progress"
+        TIMESTAMP started_at "DEFAULT NOW()"
+        TIMESTAMP updated_at "DEFAULT NOW()"
+        TIMESTAMP completed_at
+    }
+
+    choice_history {
+        UUID id PK
+        UUID session_id FK "NOT NULL, ON DELETE CASCADE"
+        VARCHAR node_id "NOT NULL"
+        VARCHAR choice_id "NOT NULL"
+        VARCHAR target_node_id "NOT NULL"
+        INTEGER sequence_number "NOT NULL"
+        TIMESTAMP chosen_at "DEFAULT NOW()"
+    }
+
+    reading_sessions ||--o{ choice_history : "registra elecciones"

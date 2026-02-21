@@ -1,0 +1,27 @@
+sequenceDiagram
+    title Flujo 2: Inicio de Sesión
+
+    actor Usuario
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Auth as Auth Service
+
+    Usuario->>UI: Ingresa email y password
+    UI->>GW: POST /auth/login
+    GW->>Auth: Redirige petición
+    Auth->>Auth: Verifica credenciales
+    Auth->>Auth: Genera access token + refresh token
+    Auth-->>GW: 200 {accessToken, refreshToken, roles}
+    GW-->>UI: Tokens JWT
+    UI-->>Usuario: Redirige según rol
+
+    Note over UI, Auth: --- Renovación de token ---
+
+    UI->>GW: Petición con token expirado
+    GW-->>UI: 401 Unauthorized
+    UI->>GW: POST /auth/refresh {refreshToken}
+    GW->>Auth: Redirige
+    Auth->>Auth: Valida y rota refresh token
+    Auth-->>GW: 200 {nuevo accessToken, refreshToken}
+    GW-->>UI: Nuevos tokens
+    UI->>GW: Reintenta petición original

@@ -1,0 +1,34 @@
+sequenceDiagram
+    title Flujo 8: Administración de Usuarios
+
+    actor Admin as Administrador
+    participant UI as UI Administración
+    participant GW as API Gateway
+    participant Auth as Auth Service
+    participant User as User Service
+
+    Admin->>UI: Inicia sesión como administrador
+    UI->>GW: POST /auth/login
+    GW->>Auth: Verifica credenciales + rol Admin
+    Auth-->>UI: Tokens JWT
+    UI-->>Admin: Dashboard de administración
+
+    Admin->>UI: Navega a "Gestión de Usuarios"
+    UI->>GW: GET /admin/users
+    GW->>User: Redirige
+    User-->>UI: {users[], total}
+    UI-->>Admin: Tabla de usuarios
+
+    Admin->>UI: Cambia rol de un usuario
+    UI->>GW: PUT /admin/users/:id/role {roleId}
+    GW->>Auth: Redirige
+    Auth->>Auth: Asigna nuevo rol
+    Auth-->>UI: 200 Rol actualizado
+    UI-->>Admin: Confirmación
+
+    Admin->>UI: Desactiva un usuario
+    UI->>GW: PUT /admin/users/:id/status {isActive: false}
+    GW->>Auth: Redirige
+    Auth->>Auth: Desactiva cuenta y revoca tokens
+    Auth-->>UI: 200 OK
+    UI-->>Admin: Usuario desactivado

@@ -1,0 +1,12 @@
+---
+title: Reading Service — Redis (Cache de Lectura)
+---
+erDiagram
+    redis_node_cache["node:story_id:node_id"] {
+        JSON nodo_completo "TTL 1 hora"
+    }
+
+    redis_progress["progress:user_id:story_id"] {
+        STRING current_node_id "TTL 30 min"
+        STRING status "TTL 30 min"
+    }

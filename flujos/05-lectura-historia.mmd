@@ -1,0 +1,46 @@
+sequenceDiagram
+    title Flujo 5: Lectura Interactiva de Historia
+
+    actor Lector
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Read as Reading Service
+    participant Story as Story Service
+    participant Broker as Message Broker
+    participant Notif as Notification Service
+
+    Lector->>UI: Selecciona historia y click "Leer"
+    UI->>GW: GET /read/:storyId/start
+    GW->>Read: Redirige (con userId)
+    Read->>Read: Crea sesión de lectura
+    Read->>Story: Obtiene nodo raíz (llamada interna)
+    Story-->>Read: Nodo inicial + choices
+
+    Read-)Broker: Emite reader.story_started
+
+    Read-->>UI: {node, choices[]}
+    UI-->>Lector: Muestra texto y opciones
+
+    loop Mientras no sea nodo final
+        Lector->>UI: Selecciona una opción
+        UI->>GW: POST /read/:storyId/choose {choiceId, targetNodeId}
+        GW->>Read: Redirige
+        Read->>Read: Registra elección en historial
+        Read->>Story: Obtiene siguiente nodo
+        Story-->>Read: Nodo + choices
+
+        Read-)Broker: Emite reader.choice_made
+
+        Read-->>UI: {node, choices[]}
+        UI-->>Lector: Muestra siguiente nodo
+    end
+
+    Note over Lector, Notif: El lector alcanza un nodo final
+
+    Read->>Read: Marca sesión como completada
+    Read-)Broker: Emite reader.story_completed
+    Broker-)Notif: Consume reader.story_completed
+    Notif->>Notif: Notifica al autor
+
+    Read-->>UI: {node, isEnding: true}
+    UI-->>Lector: Pantalla de finalización

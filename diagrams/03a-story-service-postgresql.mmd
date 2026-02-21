@@ -1,0 +1,27 @@
+---
+title: Story Service — PostgreSQL (Metadatos)
+---
+erDiagram
+    genres {
+        SERIAL id PK
+        VARCHAR name UK "NOT NULL"
+        VARCHAR description
+        BOOLEAN is_active "DEFAULT true"
+    }
+
+    stories {
+        UUID id PK
+        UUID author_id "NOT NULL, FK logica Auth"
+        VARCHAR title "NOT NULL"
+        TEXT synopsis
+        INTEGER genre_id FK "NOT NULL"
+        INTEGER estimated_duration
+        VARCHAR status "DEFAULT draft"
+        INTEGER version "DEFAULT 1"
+        INTEGER node_count "DEFAULT 0"
+        TIMESTAMP created_at "DEFAULT NOW()"
+        TIMESTAMP updated_at "DEFAULT NOW()"
+        TIMESTAMP published_at
+    }
+
+    genres ||--o{ stories : "clasifica"

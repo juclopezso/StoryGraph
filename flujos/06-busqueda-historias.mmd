@@ -1,0 +1,24 @@
+sequenceDiagram
+    title Flujo 6: Búsqueda de Historias
+
+    actor Lector
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Search as Search Service
+    participant Story as Story Service
+
+    Lector->>UI: Escribe término de búsqueda y/o selecciona filtros
+    UI->>GW: GET /search?q=laberinto&genre=Fantasía
+    GW->>Search: Redirige
+    Search->>Search: Busca en OpenSearch (title, synopsis)
+    Search-->>UI: {results[], total}
+    UI-->>Lector: Muestra tarjetas de historias
+
+    Lector->>UI: Click en una historia
+    UI->>GW: GET /stories/:id
+    GW->>Story: Redirige
+    Story-->>UI: {title, synopsis, autor, género, nodos}
+    UI-->>Lector: Página de detalle
+
+    Lector->>UI: Click "Comenzar a leer"
+    Note over UI, Story: Se inicia Flujo 5: Lectura Interactiva

@@ -1,0 +1,23 @@
+sequenceDiagram
+    title Flujo 4: Publicación de Historia
+
+    actor Creador
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Story as Story Service
+    participant Broker as Message Broker
+    participant Notif as Notification Service
+
+    Creador->>UI: Click "Publicar"
+    UI->>GW: POST /stories/:id/publish
+    GW->>Story: Redirige
+    Story->>Story: Valida grafo automáticamente
+    Story->>Story: Cambia status a "published"
+
+    Story-)Broker: Emite story.published
+
+    Story-->>UI: 200 Historia publicada
+    UI-->>Creador: Confirmación de publicación
+
+    Broker-)Notif: Consume story.published
+    Notif->>Notif: Notifica a suscriptores del autor

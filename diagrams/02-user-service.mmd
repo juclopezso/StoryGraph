@@ -1,0 +1,14 @@
+---
+title: User Service — Modelo de Datos MVP
+---
+erDiagram
+    user_profiles {
+        UUID user_id PK "FK logica Auth.credentials.id"
+        VARCHAR first_name "NOT NULL"
+        VARCHAR last_name "NOT NULL"
+        VARCHAR display_name UK "NOT NULL"
+        TEXT bio
+        VARCHAR profile_photo_url
+        TIMESTAMP created_at "DEFAULT NOW()"
+        TIMESTAMP updated_at "DEFAULT NOW()"
+    }

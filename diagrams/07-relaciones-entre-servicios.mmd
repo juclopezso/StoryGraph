@@ -1,0 +1,54 @@
+---
+title: StoryGraph MVP — Relaciones logicas entre servicios
+---
+erDiagram
+    USER_user_profiles["User: user_profiles"] {
+        UUID user_id PK
+    }
+
+    STORY_stories["Story: stories (PG)"] {
+        UUID id PK
+        UUID author_id FK
+    }
+
+    STORY_stories_mongo["Story: stories (Mongo)"] {
+        STRING story_id UK,FK
+    }
+
+    STORY_nodes_mongo["Story: nodes (Mongo)"] {
+        STRING story_id FK
+        STRING node_id PK
+    }
+
+    READING_reading_sessions["Reading: reading_sessions"] {
+        UUID id PK
+        UUID user_id FK
+        UUID story_id FK
+    }
+
+    READING_choice_history["Reading: choice_history"] {
+        UUID id PK
+        UUID session_id FK
+    }
+
+    NOTIF_subscriptions["Notification: subscriptions"] {
+        UUID subscriber_id FK
+        UUID author_id FK
+    }
+
+    NOTIF_notifications["Notification: notifications"] {
+        UUID id PK
+        UUID user_id FK
+    }
+
+    USER_user_profiles ||--o{ STORY_stories : "author_id"
+    USER_user_profiles ||--o{ READING_reading_sessions : "user_id"
+    USER_user_profiles ||--o{ NOTIF_notifications : "user_id"
+    USER_user_profiles ||--o{ NOTIF_subscriptions : "subscriber_id"
+    USER_user_profiles ||--o{ NOTIF_subscriptions : "author_id"
+
+    STORY_stories ||--|| STORY_stories_mongo : "story_id"
+    STORY_stories_mongo ||--o{ STORY_nodes_mongo : "story_id"
+    STORY_stories ||--o{ READING_reading_sessions : "story_id"
+
+    READING_reading_sessions ||--o{ READING_choice_history : "session_id"

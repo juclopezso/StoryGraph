@@ -1,0 +1,41 @@
+sequenceDiagram
+    title Flujo 3: Creación de Historia
+
+    actor Creador
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Story as Story Service
+
+    Creador->>UI: Click "Nueva Historia"
+    UI->>GW: POST /stories {title, synopsis, genreId}
+    GW->>Story: Redirige (con userId del JWT)
+    Story->>Story: Crea historia en estado draft
+    Story-->>UI: 201 {storyId}
+    UI-->>Creador: Abre editor de grafo
+
+    Creador->>UI: Crea nodo inicial
+    UI->>GW: POST /stories/:id/nodes {title, content, isStart: true}
+    GW->>Story: Redirige
+    Story->>Story: Crea nodo raíz
+    Story-->>UI: 201 {nodeId}
+
+    loop Para cada nodo adicional
+        Creador->>UI: Agrega nodo en editor visual
+        UI->>GW: POST /stories/:id/nodes
+        GW->>Story: Redirige
+        Story-->>UI: 201 {nodeId}
+    end
+
+    loop Para cada conexión entre nodos
+        Creador->>UI: Conecta nodo A → nodo B
+        UI->>GW: POST /stories/:id/nodes/:nodeId/choices {text, targetNodeId}
+        GW->>Story: Redirige
+        Story-->>UI: 201 {choiceId}
+    end
+
+    Creador->>UI: Click "Validar historia"
+    UI->>GW: POST /stories/:id/validate
+    GW->>Story: Redirige
+    Story->>Story: Valida: nodo raíz, nodos finales,<br/>conectividad del grafo
+    Story-->>UI: {valid: true/false, errors[]}
+    UI-->>Creador: Resultado de validación

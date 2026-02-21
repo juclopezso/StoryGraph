@@ -1,0 +1,26 @@
+---
+title: Story Service — MongoDB (Grafo Narrativo)
+---
+erDiagram
+    stories_mongo["stories (coleccion)"] {
+        ObjectId _id PK
+        STRING story_id UK "UUID de PostgreSQL"
+        STRING root_node_id "UUID del nodo inicial"
+        DATE created_at
+        DATE updated_at
+    }
+
+    nodes_mongo["nodes (coleccion)"] {
+        ObjectId _id PK
+        STRING node_id "UUID del nodo"
+        STRING story_id "UUID de la historia"
+        STRING title
+        STRING content
+        BOOLEAN is_start
+        BOOLEAN is_ending
+        ARRAY choices "choice_id, text, target_node_id"
+        DATE created_at
+        DATE updated_at
+    }
+
+    stories_mongo ||--o{ nodes_mongo : "story_id"

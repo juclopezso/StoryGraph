@@ -1,0 +1,43 @@
+---
+title: Auth Service — Modelo de Datos MVP
+---
+erDiagram
+    credentials {
+        UUID id PK
+        VARCHAR email UK "NOT NULL"
+        VARCHAR password_hash "NOT NULL"
+        BOOLEAN is_active "DEFAULT true"
+        BOOLEAN is_email_verified "DEFAULT false"
+        TIMESTAMP last_login_at
+        TIMESTAMP created_at "DEFAULT NOW()"
+        TIMESTAMP updated_at "DEFAULT NOW()"
+    }
+
+    roles {
+        SERIAL id PK
+        VARCHAR name UK "NOT NULL"
+        VARCHAR description
+        TIMESTAMP created_at "DEFAULT NOW()"
+    }
+
+    user_roles {
+        UUID user_id PK,FK
+        INTEGER role_id PK,FK
+        TIMESTAMP assigned_at "DEFAULT NOW()"
+        UUID assigned_by FK
+    }
+
+    refresh_tokens {
+        UUID id PK
+        UUID user_id FK "NOT NULL"
+        VARCHAR token_hash "NOT NULL"
+        VARCHAR device_info
+        TIMESTAMP expires_at "NOT NULL"
+        TIMESTAMP revoked_at
+        TIMESTAMP created_at "DEFAULT NOW()"
+    }
+
+    credentials ||--o{ user_roles : "tiene roles"
+    roles ||--o{ user_roles : "asignado a"
+    credentials ||--o{ refresh_tokens : "posee tokens"
+    credentials ||--o{ user_roles : "assigned_by"

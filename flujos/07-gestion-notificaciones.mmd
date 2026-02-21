@@ -1,0 +1,20 @@
+sequenceDiagram
+    title Flujo 7: Notificaciones
+
+    actor Usuario
+    participant UI as UI Usuario
+    participant GW as API Gateway
+    participant Notif as Notification Service
+
+    Usuario->>UI: Click en ícono de notificaciones
+    UI->>GW: GET /notifications
+    GW->>Notif: Redirige (con userId)
+    Notif-->>UI: {notifications[], unreadCount}
+    UI-->>Usuario: Panel de notificaciones
+
+    Usuario->>UI: Click en una notificación
+    UI->>GW: PUT /notifications/:id/read
+    GW->>Notif: Redirige
+    Notif->>Notif: Marca como leída
+    Notif-->>UI: 200 OK
+    UI-->>Usuario: Notificación marcada como leída

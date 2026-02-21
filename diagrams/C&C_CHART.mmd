@@ -1,0 +1,105 @@
+---
+config:
+  layout: elk
+  look: classic
+  theme: redux
+---
+flowchart TB
+ subgraph Frontend["💻 Frontend Layer"]
+        USER["UI<br>Usuario"]
+        ADMIN["UI<br>Administración"]
+  end
+ subgraph Gateway["🔐 Gateway Layer"]
+        APIGW["API<br>Gateway"]
+  end
+ subgraph Microservices["⚙️ Microservices Layer"]
+        PROFILE["User &amp; Auth<br>Service"]
+        STORY["Story<br>Service"]
+        READER["Reader<br>Service"]
+        NOTIFICATION["Notification<br>Service"]
+        SEARCH["Search<br>Service"]
+  end
+ subgraph BusDriver["🚍 Event Bus Layer"]
+        READING[("Reading<br>Event Bus")]
+  end
+ subgraph SQLDB["🟣 PostgreSQL"]
+        SQLAUTH[("Users &amp;<br>Auth")]
+        SQLMETA[("Story<br>Metadata")]
+        SQLPROGRESS[("User <br> Progress")]
+  end
+ subgraph NoSQLDBCluster["🟢 MongoDB"]
+        NoSQLSTORY[("Story Nodes<br>&amp; Graph")]
+  end
+ subgraph RedisCluster["🔴 Redis Cache"]
+        REDISPROGRESS[("Reader<br>Progress")]
+  end
+ subgraph Databases["🗄️ Data Storage Layer"]
+        SQLDB
+        NoSQLDBCluster
+        RedisCluster
+  end
+ subgraph Externos["🌐 External Services"]
+        OAUTH["OAuth Provider<br>(Auth0/Firebase)"]
+  end
+ subgraph Sistema["☁️ StoryGraph Cloud-Native System"]
+        Frontend
+        Gateway
+        Microservices
+        BusDriver
+        Databases
+  end
+    USER ==> APIGW
+    ADMIN ==> APIGW
+    APIGW -. REST API .-> PROFILE & STORY & READER & SEARCH
+    PROFILE -- SQL <br> Driver --> SQLAUTH
+    STORY -- SQL <br> Driver --> SQLMETA
+    STORY -- MongoDB <br> Driver --> NoSQLSTORY
+    READER -- Redis <br> Client --> REDISPROGRESS
+    SEARCH -- MongoDB <br> Driver --> NoSQLSTORY
+    STORY == Publish <br> Events ==> READING
+    READER == Publish <br> Events ==> READING
+    READING == Subscribe ==> NOTIFICATION
+    PROFILE -. "OAuth 2.0" .-> OAUTH
+    READER -- SQL <br> Driver --> SQLPROGRESS
+
+     USER:::frontend
+     ADMIN:::frontend
+     APIGW:::gateway
+     PROFILE:::authservice
+     STORY:::coreservice
+     READER:::coreservice
+     NOTIFICATION:::supportservice
+     SEARCH:::supportservice
+     READING:::eventbus
+     SQLAUTH:::sqldb
+     SQLMETA:::sqldb
+     SQLPROGRESS:::sqldb
+     NoSQLSTORY:::nosqldb
+     REDISPROGRESS:::redisdb
+     OAUTH:::external
+    classDef frontend fill:#4FC3F7,stroke:#0277BD,stroke-width:3px,color:#000000,font-weight:bold
+    classDef gateway fill:#FF6B6B,stroke:#C92A2A,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef authservice fill:#9C27B0,stroke:#6A1B9A,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef coreservice fill:#66BB6A,stroke:#2E7D32,stroke-width:3px,color:#000000,font-weight:bold
+    classDef supportservice fill:#FFA726,stroke:#EF6C00,stroke-width:3px,color:#000000,font-weight:bold
+    classDef eventbus fill:#FFCA28,stroke:#F57F17,stroke-width:4px,color:#000000,font-weight:bold
+    classDef sqldb fill:#5C6BC0,stroke:#283593,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef nosqldb fill:#26A69A,stroke:#00695C,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef redisdb fill:#EF5350,stroke:#C62828,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef external fill:#90A4AE,stroke:#455A64,stroke-width:3px,color:#000000,font-weight:bold
+    linkStyle 0 stroke:#4CAF50,stroke-width:3px,color:#000000,fill:none
+    linkStyle 1 stroke:#4CAF50,stroke-width:3px,color:#000000,fill:none
+    linkStyle 2 stroke:#FF9800,stroke-width:3px,fill:none
+    linkStyle 3 stroke:#FF9800,stroke-width:3px,fill:none
+    linkStyle 4 stroke:#FF9800,stroke-width:3px,fill:none
+    linkStyle 5 stroke:#FF9800,stroke-width:3px,fill:none
+    linkStyle 6 stroke:#3F51B5,stroke-width:3px,fill:none
+    linkStyle 7 stroke:#3F51B5,stroke-width:3px,fill:none
+    linkStyle 8 stroke:#00897B,stroke-width:3px,fill:none
+    linkStyle 9 stroke:#E53935,stroke-width:3px,fill:none
+    linkStyle 10 stroke:#00897B,stroke-width:3px,fill:none
+    linkStyle 11 stroke:#FBC02D,stroke-width:3px,fill:none
+    linkStyle 12 stroke:#FBC02D,stroke-width:3px,fill:none
+    linkStyle 13 stroke:#FBC02D,stroke-width:3px,fill:none
+    linkStyle 14 stroke:#78909C,stroke-width:3px,fill:none
+    linkStyle 15 stroke:#3F51B5,stroke-width:3px,fill:none
