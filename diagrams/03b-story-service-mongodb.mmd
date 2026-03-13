@@ -2,7 +2,7 @@
 title: Story Service — MongoDB (Grafo Narrativo)
 ---
 erDiagram
-    stories_mongo["stories (coleccion)"] {
+    story_graphs ["story_graphs (coleccion)"] {
         ObjectId _id PK
         STRING story_id UK "UUID de PostgreSQL"
         STRING root_node_id "UUID del nodo inicial"
@@ -10,7 +10,7 @@ erDiagram
         DATE updated_at
     }
 
-    nodes_mongo["nodes (coleccion)"] {
+    nodes ["nodes (coleccion)"] {
         ObjectId _id PK
         STRING node_id "UUID del nodo"
         STRING story_id "UUID de la historia"
