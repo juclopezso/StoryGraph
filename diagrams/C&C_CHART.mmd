@@ -6,32 +6,34 @@ config:
 ---
 flowchart TB
  subgraph Frontend["💻 Frontend Layer"]
-        USER["UI<br>Usuario"]
-        ADMIN["UI<br>Administración"]
+        USER["StoryGraph<br>WA"]
   end
  subgraph Gateway["🔐 Gateway Layer"]
         APIGW["API<br>Gateway"]
   end
+ subgraph LoadBalancer["⚖️ Load Balancer Layer"]
+        ALB["Application<br>Load Balancer"]
+  end
  subgraph Microservices["⚙️ Microservices Layer"]
-        PROFILE["User &amp; Auth<br>Service"]
+        PROFILE["User<br>Service"]
         STORY["Story<br>Service"]
         READER["Reader<br>Service"]
         NOTIFICATION["Notification<br>Service"]
-        SEARCH["Search<br>Service"]
   end
  subgraph BusDriver["🚍 Event Bus Layer"]
-        READING[("Reading<br>Event Bus")]
+        READING[("Event Bus")]
   end
  subgraph SQLDB["🟣 PostgreSQL"]
-        SQLAUTH[("Users &amp;<br>Auth")]
+        SQLAUTH[("Users<br>Data")]
         SQLMETA[("Story<br>Metadata")]
-        SQLPROGRESS[("User <br> Progress")]
+        SQLPROGRESS[("Reader<br> Progress")]
   end
  subgraph NoSQLDBCluster["🟢 MongoDB"]
         NoSQLSTORY[("Story Nodes<br>&amp; Graph")]
   end
  subgraph RedisCluster["🔴 Redis Cache"]
         REDISPROGRESS[("Reader<br>Progress")]
+        REDISUSER[("User<br>Cache")]
   end
  subgraph Databases["🗄️ Data Storage Layer"]
         SQLDB
@@ -39,67 +41,85 @@ flowchart TB
         RedisCluster
   end
  subgraph Externos["🌐 External Services"]
-        OAUTH["OAuth Provider<br>(Auth0/Firebase)"]
+        OAUTH["Auth<br>Service"]
+        n2["Storage<br>Service"]
+        n3["Serverless<br>Function"]
   end
  subgraph Sistema["☁️ StoryGraph Cloud-Native System"]
         Frontend
         Gateway
+        LoadBalancer
         Microservices
         BusDriver
         Databases
   end
     USER ==> APIGW
-    ADMIN ==> APIGW
-    APIGW -. REST API .-> PROFILE & STORY & READER & SEARCH
+    APIGW -. REST API .-> ALB
+    ALB -. REST API .-> PROFILE & STORY & READER
     PROFILE -- SQL <br> Driver --> SQLAUTH
+    PROFILE -- Redis <br> Client --> REDISUSER
     STORY -- SQL <br> Driver --> SQLMETA
     STORY -- MongoDB <br> Driver --> NoSQLSTORY
     READER -- Redis <br> Client --> REDISPROGRESS
-    SEARCH -- MongoDB <br> Driver --> NoSQLSTORY
     STORY == Publish <br> Events ==> READING
     READER == Publish <br> Events ==> READING
     READING == Subscribe ==> NOTIFICATION
+    READING == Subscribe ==> PROFILE
     PROFILE -. "OAuth 2.0" .-> OAUTH
     READER -- SQL <br> Driver --> SQLPROGRESS
+    PROFILE -. REST API .-> n2
+    n3 == Publish <br> Events ==> READING
+    OAUTH -. REST API .-> n3
+    n2 -. REST API .-> USER
 
      USER:::frontend
-     ADMIN:::frontend
      APIGW:::gateway
+     ALB:::loadbalancer
      PROFILE:::authservice
-     STORY:::coreservice
+     STORY:::storyservice
      READER:::coreservice
-     NOTIFICATION:::supportservice
-     SEARCH:::supportservice
+     NOTIFICATION:::notifservice
      READING:::eventbus
      SQLAUTH:::sqldb
      SQLMETA:::sqldb
      SQLPROGRESS:::sqldb
      NoSQLSTORY:::nosqldb
      REDISPROGRESS:::redisdb
+     REDISUSER:::redisdb
      OAUTH:::external
+     n2:::external
+     n3:::external
     classDef frontend fill:#4FC3F7,stroke:#0277BD,stroke-width:3px,color:#000000,font-weight:bold
     classDef gateway fill:#FF6B6B,stroke:#C92A2A,stroke-width:3px,color:#FFFFFF,font-weight:bold
     classDef authservice fill:#9C27B0,stroke:#6A1B9A,stroke-width:3px,color:#FFFFFF,font-weight:bold
     classDef coreservice fill:#66BB6A,stroke:#2E7D32,stroke-width:3px,color:#000000,font-weight:bold
-    classDef supportservice fill:#FFA726,stroke:#EF6C00,stroke-width:3px,color:#000000,font-weight:bold
+    classDef storyservice fill:#00BCD4,stroke:#00838F,stroke-width:3px,color:#000000,font-weight:bold
+    classDef notifservice fill:#EC407A,stroke:#AD1457,stroke-width:3px,color:#FFFFFF,font-weight:bold
+    classDef loadbalancer fill:#7E57C2,stroke:#4527A0,stroke-width:3px,color:#FFFFFF,font-weight:bold
     classDef eventbus fill:#FFCA28,stroke:#F57F17,stroke-width:4px,color:#000000,font-weight:bold
     classDef sqldb fill:#5C6BC0,stroke:#283593,stroke-width:3px,color:#FFFFFF,font-weight:bold
     classDef nosqldb fill:#26A69A,stroke:#00695C,stroke-width:3px,color:#FFFFFF,font-weight:bold
     classDef redisdb fill:#EF5350,stroke:#C62828,stroke-width:3px,color:#FFFFFF,font-weight:bold
     classDef external fill:#90A4AE,stroke:#455A64,stroke-width:3px,color:#000000,font-weight:bold
+    style OAUTH fill:#BBDEFB
+    style n2 fill:#BBDEFB
+    style n3 fill:#BBDEFB
     linkStyle 0 stroke:#4CAF50,stroke-width:3px,color:#000000,fill:none
-    linkStyle 1 stroke:#4CAF50,stroke-width:3px,color:#000000,fill:none
+    linkStyle 1 stroke:#FF9800,stroke-width:3px,fill:none
     linkStyle 2 stroke:#FF9800,stroke-width:3px,fill:none
     linkStyle 3 stroke:#FF9800,stroke-width:3px,fill:none
     linkStyle 4 stroke:#FF9800,stroke-width:3px,fill:none
-    linkStyle 5 stroke:#FF9800,stroke-width:3px,fill:none
-    linkStyle 6 stroke:#3F51B5,stroke-width:3px,fill:none
+    linkStyle 5 stroke:#3F51B5,stroke-width:3px,fill:none
+    linkStyle 6 stroke:#E53935,stroke-width:3px,fill:none
     linkStyle 7 stroke:#3F51B5,stroke-width:3px,fill:none
     linkStyle 8 stroke:#00897B,stroke-width:3px,fill:none
     linkStyle 9 stroke:#E53935,stroke-width:3px,fill:none
-    linkStyle 10 stroke:#00897B,stroke-width:3px,fill:none
+    linkStyle 10 stroke:#FBC02D,stroke-width:3px,fill:none
     linkStyle 11 stroke:#FBC02D,stroke-width:3px,fill:none
     linkStyle 12 stroke:#FBC02D,stroke-width:3px,fill:none
     linkStyle 13 stroke:#FBC02D,stroke-width:3px,fill:none
     linkStyle 14 stroke:#78909C,stroke-width:3px,fill:none
     linkStyle 15 stroke:#3F51B5,stroke-width:3px,fill:none
+    linkStyle 16 stroke:#FBC02D,stroke-width:3px,fill:none
+    linkStyle 17 stroke:#78909C,stroke-width:3px,fill:none
+    linkStyle 18 stroke:#78909C,stroke-width:3px,fill:none
