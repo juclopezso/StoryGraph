@@ -1,0 +1,7 @@
+Secutiry groups
+- alb-sg sg-id: sg-0201051b648d59c67
+- ecs-sg sg-id: sg-047370f798d311bd5
+- db-sg sg-id: sg-0978f61932f727ac7
+
+Cloudfront:
+Domain name: d226maag9rwm5s.cloudfront.net

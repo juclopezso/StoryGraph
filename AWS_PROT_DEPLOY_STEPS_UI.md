@@ -457,37 +457,164 @@ Repeat for each of the 3 services:
 
 **Go to: API Gateway → Create API → HTTP API → Build**
 
-1. API name: `app-api`
-2. Click **Next** (skip integrations for now)
-3. Stage name: `prod`
-4. Click **Create**
+# Step 7 — API Gateway (HTTP API)
 
-**Add a JWT Authorizer:**
-1. Go to your API → **Authorization → Manage authorizers → Create**
-2. Type: **JWT**
-3. Name: `cognito-auth`
-4. Identity source: `$request.header.Authorization`
-5. Issuer URL: `https://cognito-idp.us-east-1.amazonaws.com/YOUR_USER_POOL_ID`
-6. Audience: `YOUR_APP_CLIENT_ID`
-7. Click **Create**
+> **Values you need before starting:**
+> - CloudFront URL: `https://d226maag9rwm5s.cloudfront.net`
+> - Cognito User Pool ID: `us-east-1_XXXXXX`
+> - Cognito App Client ID: *(from Cognito → User pools → App clients)*
+> - ALB DNS: `app-alb-510868804.us-east-1.elb.amazonaws.com`
 
-**Add Integrations → Integrations → Create**
+---
 
-Create one integration per service:
-1. Integration type: **HTTP URI**
-2. URL: `http://YOUR_ALB_DNS/users/{proxy}` (adjust path per service)
-3. Method: **ANY**
-4. Repeat for `/business` and `/processing`
+## 7.1 — Create the HTTP API
 
-**Add Routes → Routes → Create**
+1. Search **API Gateway** in the top search bar → open it
+2. Click **Create API**
+3. Under **HTTP API** click **Build**
+4. Under **Integrations** — skip for now, click **Next**
+5. **API name**: `app-api`
+6. Leave everything else default → click **Next**
+7. **Configure routes** — skip for now → click **Next**
+8. **Stage name**: `$default` *(leave as is)*
+9. **Auto-deploy**: make sure it is **Enabled** ✅
+10. Click **Next** → click **Create**
 
-| Route | Integration | Authorizer |
-|-------|------------|------------|
-| `ANY /users/{proxy+}` | user integration | `cognito-auth` |
-| `ANY /business/{proxy+}` | business integration | `cognito-auth` |
-| `ANY /processing/{proxy+}` | processing integration | `cognito-auth` |
+📋 Save: your API URL shown on the API detail page — it looks like `https://XXXXX.execute-api.us-east-1.amazonaws.com`
 
-📋 Save: API Gateway URL (shown in API details, format: `https://XXXXX.execute-api.us-east-1.amazonaws.com/prod`)
+---
+
+## 7.2 — Add the Cognito JWT Authorizer
+
+1. On your API page, click **Authorization** in the left sidebar
+2. Click the **Manage authorizers** tab
+3. Click **Create**
+4. Fill in:
+   - **Authorizer type**: JWT
+   - **Name**: `cognito-auth`
+   - **Identity source**: `$request.header.Authorization`
+   - **Issuer URL**: `https://cognito-idp.us-east-1.amazonaws.com/YOUR_USER_POOL_ID`
+     *(replace `YOUR_USER_POOL_ID` with your actual pool ID, e.g. `us-east-1_ABC123`)*
+   - **Audience**: paste your **App Client ID**
+5. Click **Create**
+
+---
+
+## 7.3 — Create the 3 Integrations (one per service)
+
+Go to **Integrations** in the left sidebar → click **Manage integrations** → **Create**
+
+### Integration 1 — User service
+
+| Field | Value |
+|-------|-------|
+| Integration type | **HTTP URI** |
+| Integration URI | `http://app-alb-510868804.us-east-1.elb.amazonaws.com/users/{proxy}` |
+| HTTP method | **ANY** |
+| Integration subtype | — |
+
+Click **Create**.
+
+### Integration 2 — Story service
+
+| Field | Value |
+|-------|-------|
+| Integration type | **HTTP URI** |
+| Integration URI | `http://app-alb-510868804.us-east-1.elb.amazonaws.com/stories/{proxy}` |
+| HTTP method | **ANY** |
+
+Click **Create**.
+
+### Integration 3 — Reader service
+
+| Field | Value |
+|-------|-------|
+| Integration type | **HTTP URI** |
+| Integration URI | `http://app-alb-510868804.us-east-1.elb.amazonaws.com/reading/{proxy}` |
+| HTTP method | **ANY** |
+
+Click **Create**.
+
+---
+
+## 7.4 — Create the 3 Routes
+
+Go to **Routes** in the left sidebar → **Create**
+
+### Route 1 — Users
+
+1. **Method**: `ANY`
+2. **Path**: `/users/{proxy+}`
+3. Click **Create**
+4. Click on the route you just created → **Attach integration** → select the user service integration
+5. Click **Attach authorizer** → select `cognito-auth`
+
+### Route 2 — Stories
+
+1. **Method**: `ANY`
+2. **Path**: `/stories/{proxy+}`
+3. Click **Create**
+4. Attach the story service integration
+5. Attach `cognito-auth` authorizer
+
+### Route 3 — Reading
+
+1. **Method**: `ANY`
+2. **Path**: `/reading/{proxy+}`
+3. Click **Create**
+4. Attach the reader service integration
+5. Attach `cognito-auth` authorizer
+
+---
+
+## 7.5 — Configure CORS
+
+Go to **CORS** in the left sidebar → **Configure**
+
+| Field | Value |
+|-------|-------|
+| Access-Control-Allow-Origin | `https://d226maag9rwm5s.cloudfront.net` |
+| Access-Control-Allow-Headers | `Authorization, Content-Type` |
+| Access-Control-Allow-Methods | `GET, POST, PUT, DELETE, OPTIONS` |
+| Access-Control-Max-Age | `300` |
+
+Click **Save**.
+
+---
+
+## 7.6 — Test it
+
+Your API Gateway URL is on the API detail page. Test your user service:
+
+```
+https://XXXXX.execute-api.us-east-1.amazonaws.com/users/health
+```
+
+Without a JWT token this should return **401 Unauthorized** — which means it's working correctly. The authorizer is blocking unauthenticated requests as expected.
+
+To test with a token, pass it in the Authorization header:
+```
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+---
+
+## Summary — what you now have
+
+```
+Frontend (CloudFront)
+        |
+   API Gateway
+   /    |    \
+/users /stories /reading
+  |       |        |
+  ALB  →  ALB  →  ALB
+  |       |        |
+user   story   reader
+service service service
+```
+
+All requests from the frontend go through API Gateway which validates the Cognito JWT before forwarding to the ALB → ECS services.
 
 ---
 
