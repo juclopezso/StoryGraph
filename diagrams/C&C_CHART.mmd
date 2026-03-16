@@ -4,7 +4,7 @@ config:
   look: classic
   theme: redux
 ---
-flowchart TB
+flowchart LR
  subgraph Frontend["💻 Frontend Layer"]
         USER["StoryGraph<br>WA"]
   end
@@ -40,11 +40,6 @@ flowchart TB
         NoSQLDBCluster
         RedisCluster
   end
- subgraph Externos["🌐 External Services"]
-        OAUTH["Auth<br>Service"]
-        n2["Storage<br>Service"]
-        n3["Serverless<br>Function"]
-  end
  subgraph Sistema["☁️ StoryGraph Cloud-Native System"]
         Frontend
         Gateway
@@ -52,6 +47,11 @@ flowchart TB
         Microservices
         BusDriver
         Databases
+  end
+ subgraph Externos["🌐 External Services"]
+        OAUTH["Auth<br>Service"]
+        n2["Storage<br>Service"]
+        n3["Serverless<br>Function"]
   end
     USER ==> APIGW
     APIGW -. REST API .-> ALB
@@ -70,7 +70,8 @@ flowchart TB
     PROFILE -. REST API .-> n2
     n3 == Publish <br> Events ==> READING
     OAUTH -. REST API .-> n3
-    n2 -. REST API .-> USER
+    USER -. Fetch <br> Assets .-> n2
+    Databases ~~~ Externos
 
      USER:::frontend
      APIGW:::gateway
@@ -120,6 +121,6 @@ flowchart TB
     linkStyle 13 stroke:#FBC02D,stroke-width:3px,fill:none
     linkStyle 14 stroke:#78909C,stroke-width:3px,fill:none
     linkStyle 15 stroke:#3F51B5,stroke-width:3px,fill:none
-    linkStyle 16 stroke:#FBC02D,stroke-width:3px,fill:none
-    linkStyle 17 stroke:#78909C,stroke-width:3px,fill:none
+    linkStyle 16 stroke:#78909C,stroke-width:3px,fill:none
+    linkStyle 17 stroke:#FBC02D,stroke-width:3px,fill:none
     linkStyle 18 stroke:#78909C,stroke-width:3px,fill:none
